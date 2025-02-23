@@ -19,4 +19,4 @@ productRouter
   .route("/:id")
   .get(getProduct)
   .delete(isAuthenticated, isAdmin, deleteProduct)
-  .patch(isAuthenticated, isAdmin, updateProduct);
+  .put(isAuthenticated, isAdmin, updateProduct);

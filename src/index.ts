@@ -13,7 +13,7 @@ import { connectDB } from "./infrastructure/db";
 const app = express();
 app.use(express.json()); // For parsing JSON requests
 app.use(clerkMiddleware());
-app.use(cors({ origin: "https://mebius-frontend-yasindug.netlify.app" }));
+app.use(cors({ origin: "http://localhost:5173" }));
 
 app.use("/api/products", productRouter);
 app.use("/api/categories", categoryRouter);
