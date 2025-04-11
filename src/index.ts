@@ -8,18 +8,19 @@ import globalErrorHandlingMiddleware from "./api/middleware/global-error-handlin
 import { orderRouter } from "./api/order";
 import { paymentsRouter } from "./api/payment";
 import { productRouter } from "./api/product";
+import { userRouter } from "./api/user";
 import { connectDB } from "./infrastructure/db";
 
 const app = express();
 app.use(express.json()); // For parsing JSON requests
 app.use(clerkMiddleware());
-app.use(cors({ origin: "https://mebius-frontend-yasindug.netlify.app" }));
+app.use(cors({ origin: "http://localhost:5173" }));
 
 app.use("/api/products", productRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/payments", paymentsRouter);
-
+app.use("/api/users", userRouter);
 
 app.use(globalErrorHandlingMiddleware);
 

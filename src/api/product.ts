@@ -5,6 +5,7 @@ import {
   getProduct,
   deleteProduct,
   updateProduct,
+  
 } from "../application/product";
 import { isAuthenticated } from "./middleware/authentication-middleware";
 import { isAdmin } from "./middleware/authorization-middleware";
@@ -20,3 +21,5 @@ productRouter
   .get(getProduct)
   .delete(isAuthenticated, isAdmin, deleteProduct)
   .put(isAuthenticated, isAdmin, updateProduct);
+
+

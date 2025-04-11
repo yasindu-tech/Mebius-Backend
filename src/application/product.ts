@@ -101,3 +101,6 @@ export const updateProduct = async (
     next(error);
   }
 };
+
+
+

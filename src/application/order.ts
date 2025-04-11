@@ -48,6 +48,7 @@ export const getOrders = async (
     }).populate({
       path: "items",
     });
+    
     if (!orders) {
       throw new NotFoundError("Orders not found");
     }
