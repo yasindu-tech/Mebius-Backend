@@ -56,7 +56,7 @@ export const getProduct = async (
     if (!product) {
       throw new NotFoundError("Product not found");
     }
-    res.status(200).json(product).send();
+    res.status(200).json(product);
     return;
   } catch (error) {
     next(error);

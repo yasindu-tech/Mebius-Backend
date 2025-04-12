@@ -11,4 +11,5 @@ export const isAuthenticated = (
     throw new UnauthorizedError("Unauthorized");
   }
   next();
+
 };

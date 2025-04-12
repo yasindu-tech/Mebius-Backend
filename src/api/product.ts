@@ -20,6 +20,6 @@ productRouter
   .route("/:id")
   .get(getProduct)
   .delete(isAuthenticated, isAdmin, deleteProduct)
-  .put(isAuthenticated, isAdmin, updateProduct);
+  .put(isAuthenticated,updateProduct);
 
 
