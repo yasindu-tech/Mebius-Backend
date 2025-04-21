@@ -24,13 +24,13 @@ export const createOrder = async (
       ...result.data.shippingAddress,
     });
 
-    await Order.create({
+    const order = await Order.create({
       userId,
       items: result.data.items,
       addressId: address._id,
     });
 
-    res.status(201).send();
+    res.status(201).json(order);
   } catch (error) {
     next(error);
   }
@@ -92,6 +92,26 @@ export const getOrderByUser = async (
       throw new NotFoundError("Order not found");
     }
     res.status(200).json(orders);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateOrderStatus = async(
+  req: Request,
+  res: Response,
+  next: NextFunction
+
+) => {
+  try {
+    const orderId = req.params.id;
+    const { orderStatus } = req.body;
+
+    const order = await Order.findByIdAndUpdate(orderId, {orderStatus}, { new: true });
+    if (!order) {
+      throw new NotFoundError("Order not found");
+    }
+    res.status(200).json(order);
   } catch (error) {
     next(error);
   }
