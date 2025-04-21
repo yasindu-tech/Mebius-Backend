@@ -6,6 +6,7 @@ const OrderProductSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   image: { type: String, required: true },
   description: { type: String, required: true },
+  stripePriceId: { type: String, required: true },
 });
 
 const ItemSchema = new mongoose.Schema({

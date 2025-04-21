@@ -1,13 +1,12 @@
 import express from "express";
-import { createCheckoutSession, handleWebhook } from "../application/payment";
+import {
+  createCheckoutSession,
+  handleWebhook,
+  retrieveSessionStatus,
+} from "../application/payment";
+import bodyParser from "body-parser";
 
 export const paymentsRouter = express.Router();
 
-paymentsRouter.post("/create-checkout-session", createCheckoutSession);
-
-// Use `express.raw` middleware for Stripe webhook verification
-paymentsRouter.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
-  handleWebhook
-);
+paymentsRouter.route("/create-checkout-session").post(createCheckoutSession);
+paymentsRouter.route("/session-status").get(retrieveSessionStatus);

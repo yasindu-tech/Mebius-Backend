@@ -27,6 +27,10 @@ const ProductSchema = new mongoose.Schema({
     required: true,
     default: 0,
   },
+  stripePriceId: {
+    type: String,
+    required: true,
+  },
 });
 
 export default mongoose.model("Product", ProductSchema);

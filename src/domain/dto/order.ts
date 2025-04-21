@@ -9,6 +9,7 @@ export const CreateOrderDTO = z.object({
         price: z.number(),
         image: z.string(),
         description: z.string(),
+        stripePriceId: z.string(),
       }),
       quantity: z.number(),
     })

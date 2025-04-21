@@ -13,7 +13,9 @@ export const createOrder = async (
   next: NextFunction
 ) => {
   try {
+    
     const result = CreateOrderDTO.safeParse(req.body);
+    
     if (!result.success) {
       throw new ValidationError("Invalid order data");
     }

@@ -7,4 +7,5 @@ export const CreateProductDTO = z.object({
   categoryId: z.string(),
   image: z.string(),
   stock: z.number(),
+
 });
