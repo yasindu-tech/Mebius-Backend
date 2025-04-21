@@ -1,99 +1,107 @@
 import { Request, Response } from "express";
 import util from "util";
 import Order from "../infrastructure/schemas/Order";
+import Stripe from "stripe";
 import stripe from "../infrastructure/stripe";
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 const FRONTEND_URL = process.env.FRONTEND_URL as string;
 
 async function fulfillCheckout(sessionId: string) {
-  try {
-    console.log("1. Starting fulfillCheckout for session:", sessionId);
+  console.log(`Starting fulfillment for session: ${sessionId}`);
 
-    // Retrieve the Checkout Session from the API with line_items expanded
-    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["line_items"],
+  try {
+    // Retrieve the expanded checkout session
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['line_items', 'payment_intent']
     });
-    console.log("2. Retrieved checkout session:", checkoutSession.id);
-    console.log(
-      util.inspect(checkoutSession, false, null, true /* enable colors */)
+
+    console.log('Retrieved session:', {
+      id: session.id,
+      payment_status: session.payment_status,
+      orderId: session.metadata?.orderId
+    });
+
+    // Validate we have an orderId
+    if (!session.metadata?.orderId) {
+      throw new Error('No orderId in session metadata');
+    }
+
+    // Find and update the order
+    const order = await Order.findByIdAndUpdate(
+      session.metadata.orderId,
+      {
+        paymentStatus: session.payment_status === 'paid' ? 'PAID' : 'FAILED',
+        orderStatus: session.payment_status === 'paid' ? 'CONFIRMED' : 'FAILED',
+
+      },
+      { new: true }
     );
 
-    if (!checkoutSession.metadata?.orderId) {
-      throw new Error("No orderId in checkout session metadata");
-    }
-
-    const order = await Order.findById(checkoutSession.metadata.orderId);
     if (!order) {
-      throw new Error("Order not found");
-    }
-    console.log("3. Found order:", order._id);
-
-    // Check if already fulfilled to make it idempotent
-    if (order.paymentStatus === "PAID" && order.orderStatus === "CONFIRMED") {
-      console.log("4. Order already fulfilled");
-      return;
+      throw new Error(`Order ${session.metadata.orderId} not found`);
     }
 
-    if (order.paymentStatus !== "PENDING") {
-      throw new Error(`Payment is not pending (current status: ${order.paymentStatus})`);
-    }
+    console.log('Successfully updated order:', {
+      orderId: order._id,
+      paymentStatus: order.paymentStatus,
+      orderStatus: order.orderStatus
+    });
 
-    if (order.orderStatus !== "PENDING") {
-      throw new Error(`Order is not pending (current status: ${order.orderStatus})`);
-    }
-
-    // Check if payment was successful
-    console.log("5. Payment status:", checkoutSession.payment_status);
-    if (checkoutSession.payment_status === "paid") {
-      console.log("6. Payment successful, updating order status");
-      const updatedOrder = await Order.findByIdAndUpdate(
-        order._id,
-        {
-          paymentStatus: "PAID",
-          orderStatus: "CONFIRMED",
-        },
-        { new: true }
-      );
-      console.log("7. Order updated successfully:", updatedOrder);
-    } else {
-      console.log("8. Payment not yet complete, status:", checkoutSession.payment_status);
-    }
   } catch (error) {
-    console.error("Error in fulfillCheckout:", error);
-    throw error; // Re-throw to handle in the webhook
+    console.error('Fulfillment error:', error);
+    throw error;
   }
 }
 
 export const handleWebhook = async (req: Request, res: Response) => {
-  console.log("Webhook received");
-  const payload = req.body;
-  const sig = req.headers["stripe-signature"] as string;
+  // Verify we have the raw body
+  if (!req.body || !Buffer.isBuffer(req.body)) {
+    console.error('Raw body missing - ensure bodyParser.raw() middleware is used');
+    res.status(400).send('Webhook Error: Raw body required');
+  }
 
-  let event;
-
+  const sig = req.headers['stripe-signature'] as string;
+  
+  if (!sig) {
+    console.error('Missing Stripe signature header');
+    res.status(400).send('Webhook Error: Missing signature header');
+  }
+  let event: Stripe.Event;
+ 
+  
   try {
-    console.log("Constructing Stripe event");
-    event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
-    console.log("Stripe event type:", event.type);
+    // Verify the webhook signature
+    event = stripe.webhooks.constructEvent(
+      req.body.toString(), // Convert Buffer to string
+      sig,
+      endpointSecret
+    );
+    
+    console.log(`Received Stripe event: ${event.type}`);
 
-    if (
-      event.type === "checkout.session.completed" ||
-      event.type === "checkout.session.async_payment_succeeded"
-    ) {
-      console.log("Processing checkout session event");
-      await fulfillCheckout(event.data.object.id);
-      console.log("Checkout fulfillment complete");
+    // Handle checkout.session.completed events
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log('Checkout session completed:', session.id);
+      
+      if (!session.metadata || !session.metadata.orderId) {
+        console.error('Missing orderId in session metadata');
+        res.status(400).send('Webhook Error: Missing orderId');
+      }
+
+      await fulfillCheckout(session.id);
       res.status(200).send();
-      return;
     }
 
-    console.log("Unhandled event type:", event.type);
-    res.status(200).send(); // Still return 200 for unhandled event types
+    // Handle other event types if needed
+    console.log(`Unhandled event type: ${event.type}`);
+    res.status(200).send(); // Always return 200 for unhandled events
+
   } catch (err) {
-    console.error("Webhook Error:", err);
-    // @ts-ignore
-    res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error('⚠️ Webhook signature verification failed:', err);
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    res.status(400).send(`Webhook Error: ${errorMessage}`);
   }
 };
 
