@@ -8,7 +8,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 const FRONTEND_URL = process.env.FRONTEND_URL as string;
 
 async function fulfillCheckout(sessionId: string) {
-  console.log(`Starting fulfillment for session: ${sessionId}`);
+  
 
   try {
     // Retrieve the expanded checkout session
@@ -16,13 +16,8 @@ async function fulfillCheckout(sessionId: string) {
       expand: ['line_items', 'payment_intent']
     });
 
-    console.log('Retrieved session:', {
-      id: session.id,
-      payment_status: session.payment_status,
-      orderId: session.metadata?.orderId
-    });
+   
 
-    // Validate we have an orderId
     if (!session.metadata?.orderId) {
       throw new Error('No orderId in session metadata');
     }
@@ -55,7 +50,7 @@ async function fulfillCheckout(sessionId: string) {
 }
 
 export const handleWebhook = async (req: Request, res: Response) => {
-  // Verify we have the raw body
+ 
   if (!req.body || !Buffer.isBuffer(req.body)) {
     console.error('Raw body missing - ensure bodyParser.raw() middleware is used');
     res.status(400).send('Webhook Error: Raw body required');
@@ -78,7 +73,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
       endpointSecret
     );
     
-    console.log(`Received Stripe event: ${event.type}`);
+  
 
     // Handle checkout.session.completed events
     if (event.type === 'checkout.session.completed') {
@@ -94,12 +89,11 @@ export const handleWebhook = async (req: Request, res: Response) => {
       res.status(200).send();
     }
 
-    // Handle other event types if needed
-    console.log(`Unhandled event type: ${event.type}`);
+   
     res.status(200).send(); // Always return 200 for unhandled events
 
   } catch (err) {
-    console.error('⚠️ Webhook signature verification failed:', err);
+    
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     res.status(400).send(`Webhook Error: ${errorMessage}`);
   }
