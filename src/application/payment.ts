@@ -7,14 +7,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 const FRONTEND_URL = process.env.FRONTEND_URL as string;
 
 async function fulfillCheckout(sessionId: string) {
-  
   console.log("Fulfilling checkout for session:", sessionId);
-
-  // TODO: Make this function safe to run multiple times,
-  // even concurrently, with the same session ID
-
-  // TODO: Make sure fulfillment hasn't already been
-  // peformed for this Checkout Session
 
   // Retrieve the Checkout Session from the API with line_items expanded
   const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId, {
@@ -29,6 +22,12 @@ async function fulfillCheckout(sessionId: string) {
     throw new Error("Order not found");
   }
 
+  // Check if already fulfilled to make it idempotent
+  if (order.paymentStatus === "PAID" && order.orderStatus === "CONFIRMED") {
+    console.log("Order already fulfilled");
+    return;
+  }
+
   if (order.paymentStatus !== "PENDING") {
     throw new Error("Payment is not pending");
   }
@@ -37,16 +36,13 @@ async function fulfillCheckout(sessionId: string) {
     throw new Error("Order is not pending");
   }
 
-  // Check the Checkout Session's payment_status property
-  // to determine if fulfillment should be peformed
-  if (checkoutSession.payment_status !== "unpaid") {
-    // TODO: Perform fulfillment of the line items
-    // TODO: Record/save fulfillment status for this
-    // Checkout Session
+  // Check if payment was successful
+  if (checkoutSession.payment_status === "paid") {
     await Order.findByIdAndUpdate(order._id, {
       paymentStatus: "PAID",
       orderStatus: "CONFIRMED",
     });
+    console.log("Order status updated to PAID and CONFIRMED");
   }
 }
 
