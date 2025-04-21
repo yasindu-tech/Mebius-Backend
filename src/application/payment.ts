@@ -24,7 +24,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         quantity: item.quantity,
       })),
       mode: "payment",
-      success_url: `${req.headers.origin}/complete`,
+      success_url: `${req.headers.origin}/shop/complete?orderId=${req.body.orderId}`,
       cancel_url: `${req.headers.origin}/cancel=true`,
     });
 
