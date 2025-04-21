@@ -17,7 +17,7 @@ const stripe = require('stripe')('sk_test_51RFzqw1Aq8zBi2RikELAbnqFf669XWTe7n6oa
 const app = express();
 
 
-app.use(express.json()); // For parsing JSON requests
+
 app.use(clerkMiddleware());
 // app.use(cors({ origin: "http://localhost:5173" }));
 app.use(cors({ origin:"https://mebius-frontend-yasindug.netlify.app" }));
@@ -28,6 +28,7 @@ app.post(
     handleWebhook
   );
 
+app.use(express.json()); // For parsing JSON requests
 app.use("/api/products", productRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/orders", orderRouter);
