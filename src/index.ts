@@ -15,7 +15,7 @@ const stripe = require('stripe')('sk_test_51RFzqw1Aq8zBi2RikELAbnqFf669XWTe7n6oa
 const app = express();
 app.use(express.json()); // For parsing JSON requests
 app.use(clerkMiddleware());
-// app.use(cors({ origin: "http://localhost:5173" }));
+//app.use(cors({ origin: "http://localhost:5173" }));
 app.use(cors({ origin:"https://mebius-frontend-yasindug.netlify.app" }));
 
 app.use("/api/products", productRouter);
@@ -27,5 +27,5 @@ app.use("/api/users", userRouter);
 app.use(globalErrorHandlingMiddleware);
 
 connectDB();
-const PORT = process.env.PORT || 8000;
+const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
