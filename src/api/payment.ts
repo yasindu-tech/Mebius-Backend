@@ -4,4 +4,10 @@ import { createCheckoutSession, handleWebhook } from "../application/payment";
 export const paymentsRouter = express.Router();
 
 paymentsRouter.post("/create-checkout-session", createCheckoutSession);
-paymentsRouter.post("/webhook", express.raw({ type: 'application/json' }), handleWebhook);
+
+// Use `express.raw` middleware for Stripe webhook verification
+paymentsRouter.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  handleWebhook
+);
