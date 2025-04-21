@@ -13,6 +13,8 @@ import { connectDB } from "./infrastructure/db";
 
 const stripe = require('stripe')('sk_test_51RFzqw1Aq8zBi2RikELAbnqFf669XWTe7n6oaJt1FCD0XvR3fmFr8eWxtdicA6aQYMi4wNTqljlZav8K7VnhQEP500gI3gLWMS');
 const app = express();
+
+app.use("/api/payment", paymentsRouter);
 app.use(express.json()); // For parsing JSON requests
 app.use(clerkMiddleware());
 //app.use(cors({ origin: "http://localhost:5173" }));
@@ -21,7 +23,7 @@ app.use(cors({ origin:"https://mebius-frontend-yasindug.netlify.app" }));
 app.use("/api/products", productRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/orders", orderRouter);
-app.use("/api/payment", paymentsRouter);
+
 app.use("/api/users", userRouter);
 
 app.use(globalErrorHandlingMiddleware);

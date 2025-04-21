@@ -49,6 +49,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
   }
 
   let event: Stripe.Event;
+  
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -56,6 +57,8 @@ export const handleWebhook = async (req: Request, res: Response) => {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+
+    console.log("Stripe Webhook Triggered:", event.type);
   } catch (err: any) {
     console.error(`Webhook Error: ${err.message}`);
     res.status(400).send(`Webhook Error: ${err.message}`);
@@ -71,10 +74,10 @@ export const handleWebhook = async (req: Request, res: Response) => {
         const orderId = session.metadata?.orderId;
         
         if (orderId) {
-          await Order.findByIdAndUpdate(orderId, { 
-            paymentStatus: "PAID"
-          });
-          console.log(`Order ${orderId} updated to PAID`);
+          console.log("Updating order:", orderId);
+    const result = await Order.findByIdAndUpdate(orderId, { paymentStatus: "PAID" });
+    console.log("Update result:", result);
+
         }
         break;
       default:
